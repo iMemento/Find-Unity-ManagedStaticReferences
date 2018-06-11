@@ -17,22 +17,22 @@
 ```
 public class ComponentReferenceManager
 {
-	public static ComponentReferenceManager Instance = new ComponentReferenceManager();
+    public static ComponentReferenceManager Instance = new ComponentReferenceManager();
     Dictionary<string, WeakReference> refs = new Dictionary<string, WeakReference>();
 
-	private int count = 0;
-	public void AddRef(Component c)
-	{
-		var key = string.Format("Index:<color=red>{0}</color> ComponentType:<color=red>{1}</color> GameObject:<color=red>{2}</color>", 
+    private int count = 0;
+    public void AddRef(Component c)
+    {
+	var key = string.Format("Index:<color=red>{0}</color> ComponentType:<color=red>{1}</color> GameObject:<color=red>{2}</color>", 
 				  count,  c.GetType().ToString(), GetGameObjectPath(c));
 
-		refs[key] = new WeakReference(c);
-		++count;
-	}
+	refs[key] = new WeakReference(c);
+	++count;
+    }
 
-	private string GetGameObjectPath(Component c)
+    private string GetGameObjectPath(Component c)
     {
-		var obj = c.gameObject;
+	var obj = c.gameObject;
         string path = "/" + obj.name;
         while (obj.transform.parent != null)
         {
@@ -42,34 +42,34 @@ public class ComponentReferenceManager
         return path;
     }
 	
-	public void PrintLog()
+    public void PrintLog()
+    {
+	GC.Collect();
+	Debug.LogError("打印销毁了但还被引用的物件:");
+	foreach(var kv in refs)
 	{
-		GC.Collect();
-		Debug.LogError("打印销毁了但还被引用的物件:");
-		foreach(var kv in refs)
+	    if (kv.Value.IsAlive)
+	    {
+		if (kv.Value.Target == null)
 		{
-			if (kv.Value.IsAlive)
-			{
-				if (kv.Value.Target == null)
-				{
-					Debug.LogErrorFormat("Target is null {0}", kv.Key);
-					continue;
-				}
-
-				var w = kv.Value.Target as Component;
-				if (w == null)
-				{
-					Debug.LogErrorFormat("Component is null {0}", kv.Key);
-					continue;
-				}
-
-				if (w.gameObject == null)
-				{
-					Debug.LogErrorFormat("Component attached game object is null {0}", kv.Key);
-				}
-			}
+		    Debug.LogErrorFormat("Target is null {0}", kv.Key);
+		    continue;
 		}
+
+		var w = kv.Value.Target as Component;
+		if (w == null)
+		{
+		    Debug.LogErrorFormat("Component is null {0}", kv.Key);
+		    continue;
+		}
+
+		if (w.gameObject == null)
+		{
+		    Debug.LogErrorFormat("Component attached game object is null {0}", kv.Key);
+		}
+	    }
 	}
+    }
 }
 
 ```
@@ -90,7 +90,7 @@ public partial class ReportEditor
 	[MenuItem("Jinggle/打印销毁了但还被引用的物件")]
 	static void ReportUIRef () 
 	{
-		ComponentReferenceManager.Instance.PrintLog();
+	     ComponentReferenceManager.Instance.PrintLog();
 	}
 }
 ```
